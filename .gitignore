@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: © 2026 Peter Lemenkov
+# SPDX-License-Identifier: CC0-1.0
+
 # Miscellaneous
 *.class
 *.lock
@@ -117,3 +120,13 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+# IDE / editor files
+.idea/
+*.iml
+
+# Generated per-machine — this is a source-only repo. Regenerate the Android
+# host project with `flutter create` and re-merge android_manifest_snippet.xml
+# (see README). .metadata and analysis_options.yaml are flutter-create output too.
+/android/
+/.metadata
+/analysis_options.yaml

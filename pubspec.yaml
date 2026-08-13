@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 Peter Lemenkov <lemenkov@gmail.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: ble_explorer
+description: A playful BLE radio-world explorer — scan, pick a device, and hunt it
+  by ear (Geiger clicks) and by eye (blue-cold to red-hot full-screen colour).
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # BLE scan/connect/readRssi. API here matches the 1.3x line
+  # (continuousUpdates defaults to false; device.name -> platformName/advName).
+  # Run `flutter pub upgrade` and check pub.dev for the current release.
+  flutter_blue_plus: ^1.32.0
+  # Runtime permission flow (BLUETOOTH_SCAN / BLUETOOTH_CONNECT / pre-12 location).
+  permission_handler: ^11.3.0
+  # Low-latency, fire-and-forget click playback for the Geiger feedback.
+  # (flutter_soloud replaces the discontinued soundpool, which no longer builds
+  # against modern Flutter — its Android plugin used the removed v1 Registrar.)
+  flutter_soloud: ^4.1.7
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  fake_async: ^1.3.3
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,38 @@
+<!--
+SPDX-FileCopyrightText: 2026 Peter Lemenkov <lemenkov@gmail.com>
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<!-- ============================================================= -->
+<!-- Merge these into android/app/src/main/AndroidManifest.xml      -->
+<!-- after `flutter create`. Two things:                            -->
+<!--   1. add xmlns:tools to the <manifest> root element            -->
+<!--   2. paste the <uses-permission> block ABOVE <application>     -->
+<!-- ============================================================= -->
+
+<!-- On the <manifest> tag, add this attribute: -->
+<!--   xmlns:tools="http://schemas.android.com/tools"              -->
+
+<!-- Android 12+ (API 31+): scan without deriving location -->
+<uses-permission
+    android:name="android.permission.BLUETOOTH_SCAN"
+    android:usesPermissionFlags="neverForLocation"
+    tools:targetApi="s" />
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+<!-- Android 11 and below (API <= 30): legacy BT + location to scan -->
+<uses-permission
+    android:name="android.permission.BLUETOOTH"
+    android:maxSdkVersion="30" />
+<uses-permission
+    android:name="android.permission.BLUETOOTH_ADMIN"
+    android:maxSdkVersion="30" />
+<uses-permission
+    android:name="android.permission.ACCESS_FINE_LOCATION"
+    android:maxSdkVersion="30" />
+
+<!-- Optional: declare BLE as a used (not required) hardware feature -->
+<uses-feature
+    android:name="android.hardware.bluetooth_le"
+    android:required="false" />
