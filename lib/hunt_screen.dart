@@ -150,8 +150,8 @@ class _HuntScreenState extends State<HuntScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const cold = Color(0xFF0A2C7A);
-    const hot = Color(0xFFC01F1F);
+    final cold = const Color(0xFF0A2C7A);
+    final hot = const Color(0xFFC01F1F);
     final bg = Color.lerp(cold, hot, _t)!;
     final shadow = [
       const Shadow(blurRadius: 8, color: Colors.black54, offset: Offset(0, 1)),
@@ -210,7 +210,7 @@ class _HuntScreenState extends State<HuntScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _rawRssi == null ? '' : 'raw $_rawRssi dBm',
+                    _rawRssi == null ? '' : 'raw ${_rawRssi} dBm',
                     style: TextStyle(color: Colors.white54, shadows: shadow),
                   ),
                   const SizedBox(height: 28),
@@ -229,7 +229,7 @@ class _HuntScreenState extends State<HuntScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.25),
+        color: Colors.black.withOpacity(0.25),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

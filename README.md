@@ -98,6 +98,34 @@ about its own quality.
   Android; the picker uses a soft heuristic (no name advertised → possibly
   hiding). True address-type detection needs a platform channel — see roadmap.
 
+## Picker controls (v0.2 — the crowded-room fixes)
+
+The device list used to reorder on every advertisement packet (raw RSSI swings
+~10 dBm), which made it impossible to land on a target in a busy place. Now:
+
+- **Named vs Anonymous groups.** Devices that advertise (or that we resolved) a
+  name sit in a top section; the anonymous churn (Apple & co.) drops below.
+- **Per-device smoothing.** The list sorts on a smoothed RSSI, and in signal
+  mode the key is bucketed to 5 dBm, so a row only moves when its signal changes
+  meaningfully — no more micro-reshuffle.
+- **Sort toggle** (app bar): *signal* (strongest first, bucketed/stable) or
+  *name* (alphabetical, rock-steady — best for finding a specific device).
+- **Freeze** (pause icon): stops all reordering so you can tap without the row
+  moving. New devices append at the bottom; data still updates underneath.
+- **Identify** (badge icon on anonymous *connectable* rows): connects, reads the
+  GAP Device Name characteristic (0x2A00), caches it, and the device jumps up to
+  the Named group. Connects are serialized (one at a time).
+- **Auto-identify** (search icon, off by default): works through connectable
+  anonymous devices in the background. Failures are remembered so it won't
+  hammer a device that refused.
+
+**Honest expectation for Identify:** the devices that crowd the list are mostly
+Apple/phones, and those are the *least* likely to yield — they advertise as
+non-connectable or reject connections, and even when reachable they rotate their
+address and rarely expose a useful name. Identify mostly wins for peripherals and
+DIY gear (ESP32 that keeps its name in GATT). The grouping + sort + freeze is
+what actually solves "I can't find my target," not Identify.
+
 ## Roadmap / next slices
 
 - Address-type detection via a small Android platform channel
