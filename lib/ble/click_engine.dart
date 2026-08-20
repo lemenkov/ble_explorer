@@ -2,70 +2,61 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:soundpool/soundpool.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
+
+import 'click_scheduler.dart';
 
 /// Parking-sensor / Geiger-counter audio feedback.
 ///
 /// A single short "tick" sample is synthesised at startup (no bundled asset)
-/// and replayed on a self-rescheduling timer whose interval shrinks as the
-/// target gets closer. soundpool gives low-latency, rapid-fire playback that a
-/// normal audio player can't sustain.
+/// and replayed by a [ClickScheduler] whose interval shrinks as the target gets
+/// closer. flutter_soloud gives low-latency, fire-and-forget playback — the
+/// click is ~9.5 ms and the fastest cadence is 55 ms, so ticks never overlap,
+/// but the latency still has to be tight for the effect to feel like a real
+/// Geiger counter.
+///
+/// This class owns only the *audio*; the cadence timing (and the subtle
+/// don't-starve-the-timer invariant) lives in [ClickScheduler], where it is
+/// unit-tested.
+///
+/// (Replaces the discontinued `soundpool`, whose Android plugin still used the
+/// long-removed Flutter v1-embedding `Registrar` API and no longer compiles.)
 class ClickEngine {
-  final Soundpool _pool = Soundpool.fromOptions(
-    options: const SoundpoolOptions(streamType: StreamType.notification),
-  );
-  int? _soundId;
-  Timer? _timer;
-  bool _muted = false;
-  double _t = 0.0; // 0 = far/cold, 1 = near/hot
+  ClickEngine() {
+    _scheduler = ClickScheduler(onTick: _playClick);
+  }
 
-  // Click cadence bounds.
-  static const double _minIntervalMs = 55.0; // fastest, right on top of it
-  static const double _maxIntervalMs = 1500.0; // slowest, faint contact
-  static const double _floor = 0.02; // below this: silence, not a slow tick
+  final SoLoud _soloud = SoLoud.instance;
+  AudioSource? _source;
+  late final ClickScheduler _scheduler;
 
   Future<void> init() async {
-    _soundId = await _pool.loadUint8List(_buildClickWav());
-  }
-
-  bool get muted => _muted;
-
-  void setMuted(bool value) {
-    _muted = value;
-    if (value) {
-      _timer?.cancel();
-    } else {
-      _reschedule();
+    if (!_soloud.isInitialized) {
+      // lowLatency defaults to true — exactly what a click engine wants.
+      await _soloud.init(sampleRate: 44100);
     }
+    _source = await _soloud.loadMem('geiger_click.wav', _buildClickWav());
   }
+
+  void setMuted(bool value) => _scheduler.setMuted(value);
 
   /// Feed the smoothed proximity in [0, 1].
-  void setIntensity(double t) {
-    _t = t.clamp(0.0, 1.0);
-    _reschedule();
+  void setIntensity(double t) => _scheduler.setIntensity(t);
+
+  void _playClick() {
+    final src = _source;
+    if (src != null && _soloud.isInitialized) _soloud.play(src);
   }
 
-  void _reschedule() {
-    _timer?.cancel();
-    if (_muted || _soundId == null || _t < _floor) return;
-    // Ease so the cadence ramps up sharply near the target — more satisfying.
-    final eased = _t * _t;
-    final interval =
-        _maxIntervalMs + (_minIntervalMs - _maxIntervalMs) * eased;
-    _timer = Timer(Duration(milliseconds: interval.round()), () {
-      final id = _soundId;
-      if (id != null) _pool.play(id);
-      _reschedule();
-    });
-  }
-
-  Future<void> dispose() async {
-    _timer?.cancel();
-    await _pool.dispose();
+  void dispose() {
+    _scheduler.dispose();
+    _source = null;
+    // Tear the engine down so we release the audio device / native memory when
+    // the hunt ends. A fresh HuntScreen re-inits on its way in.
+    if (_soloud.isInitialized) _soloud.deinit();
   }
 
   // ---- click synthesis: a ~9.5 ms decaying noise burst + faint 2.7 kHz tone ----
